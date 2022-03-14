@@ -1,6 +1,6 @@
 import torch
 
-from .habitat import construct_envs
+from .soundspaces import construct_envs
 
 
 def make_vec_envs(args):

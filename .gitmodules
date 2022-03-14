@@ -1,3 +1,0 @@
-[submodule "env/habitat/habitat_api"]
-	path = env/habitat/habitat_api
-	url = git://github.com/devendrachaplot/habitat-api

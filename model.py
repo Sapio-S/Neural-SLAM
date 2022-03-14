@@ -6,7 +6,7 @@ import numpy as np
 
 from utils.distributions import Categorical, DiagGaussian
 from utils.model import get_grid, ChannelPool, Flatten, NNBase
-
+from models.audio_cnn import AudioCNN
 
 # Global Policy model code
 class Global_Policy(NNBase):
@@ -81,6 +81,9 @@ class Neural_SLAM_Module(nn.Module):
             nn.Conv2d(512, 64, (1, 1), stride=(1, 1)),
             nn.ReLU()
         ]))
+
+        # Audio Encoding
+        self.audio_encoder = AudioCNN(args.observation_space, hidden_size, audiogoal_sensor)
 
         # convolution output size
         input_test = torch.randn(1,
@@ -158,9 +161,13 @@ class Neural_SLAM_Module(nn.Module):
             build_maps=True):
 
         # Get egocentric map prediction for the current obs
+        x = []
         bs, c, h, w = obs.size()
         resnet_output = self.resnet_l5(obs[:, :3, :, :])
-        conv_output = self.conv(resnet_output)
+        x.append(resnet_output)
+        x.append(self.audio_encoder(observations))
+        x1 = torch.cat(x, dim=1)
+        conv_output = self.conv(x1)
 
         proj1 = nn.ReLU()(self.proj1(
                           conv_output.view(-1, self.conv_output_size)))
@@ -177,9 +184,13 @@ class Neural_SLAM_Module(nn.Module):
 
         with torch.no_grad():
             # Get egocentric map prediction for the last obs
-            bs, c, h, w = obs_last.size()
-            resnet_output = self.resnet_l5(obs_last[:, :3, :, :])
-            conv_output = self.conv(resnet_output)
+            x = []
+            bs, c, h, w = obs.size()
+            resnet_output = self.resnet_l5(obs[:, :3, :, :])
+            x.append(resnet_output)
+            x.append(self.audio_encoder(observations))
+            x1 = torch.cat(x, dim=1)
+            conv_output = self.conv(x1)
 
             proj1 = nn.ReLU()(self.proj1(
                               conv_output.view(-1, self.conv_output_size)))
